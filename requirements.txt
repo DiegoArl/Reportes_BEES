@@ -7,3 +7,4 @@ mlxtend
 openpyxl
 streamlit
 altair<5
+pyarrow<14
