@@ -6,3 +6,4 @@ matplotlib
 mlxtend
 openpyxl
 streamlit
+altair<5
