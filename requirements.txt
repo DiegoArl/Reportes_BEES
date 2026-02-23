@@ -6,3 +6,5 @@ matplotlib
 mlxtend
 openpyxl
 streamlit
+pyinstaller
+xlsxwriter
