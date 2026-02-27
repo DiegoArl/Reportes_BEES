@@ -5,6 +5,7 @@ plotly
 matplotlib
 mlxtend
 openpyxl
-streamlit
+streamlit>=1.31
 pyinstaller
 xlsxwriter
+altair
