@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from Scripts.carga import leer_archivos_clasificados, leer_archivo_tareas, leer_archivo
-
+st.switch_page("pages/Delivery Window.py")
 st.set_page_config(
     page_title= "Automatización de Reportería",
     layout="wide"
