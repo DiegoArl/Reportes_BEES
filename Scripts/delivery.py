@@ -6,6 +6,7 @@ def construir_delivery(df):
 
     def generar_ceros_delivery(df):
         columnas_longitud = {
+            'division': 3,
             'empresa': 3,
             'oficina': 3, 
             'domicilio': 3,
@@ -16,12 +17,14 @@ def construir_delivery(df):
 
         if "COD CLIENTE BEES" not in df.columns:
             df["COD CLIENTE BEES"] = (
-                "001-" 
+                "001"
+                + "-"
                 + df['empresa'] 
+                + df['division']
                 + df['oficina']
-                + "001-" 
+                + "-"
                 + df['codigo_cliente']
-                + "001"
+                + df['domicilio']
             )
 
         return df
