@@ -54,10 +54,8 @@ def construir_delivery(df):
     df_filtrado["dia_visita"] = df_filtrado["dia_visita"].str.strip().str.upper()
     df_filtrado = df_filtrado.drop_duplicates().reset_index(drop=True)
 
-    # --- Base para combinar ---
     df_base = df[["codigo_cliente", "COD CLIENTE BEES"]].drop_duplicates().reset_index(drop=True)
 
-    # --- Estructura final ---
     columnas = [
         "UNB", "ClientCode", "Document", "Exception",
         "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
@@ -79,7 +77,6 @@ def construir_delivery(df):
     df_csv["DeliveryFrequency"] = 7
     df_csv["ClickAndCollectActive"] = False
 
-    # --- Cálculo de días ---
     mapa_dias = {
         "LUNES": 1, "MARTES": 2, "MIERCOLES": 3,
         "JUEVES": 4, "VIERNES": 5, "SABADO": 6, "DOMINGO": 7

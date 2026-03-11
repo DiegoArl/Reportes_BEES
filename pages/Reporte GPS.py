@@ -84,39 +84,11 @@ if archivos_bees:
         st.error(str(e))
 
 
-if "df_checkin" in st.session_state:
-    mostrar_preview(st.session_state.df_checkin, "Check-In")
-
-if "df_visitas" in st.session_state:
-    mostrar_preview(st.session_state.df_visitas, "Visitas")
-
-if "df_ventas" in st.session_state:
-    mostrar_preview(st.session_state.df_ventas, "Ventas")
-
-cargar_archivo(
-    "Sube archivo de Tareas",
-    "tareas_file",
-    "tareas",
-    leer_archivo_tareas
-)
-
-if "tareas" in st.session_state:
-    mostrar_preview(st.session_state.tareas, "Tareas")
-
-cargar_archivo(
-    "Sube Módulo de Ventas",
-    "modulo_file",
-    "modulo",
-    leer_archivo
-)
-
-if "modulo" in st.session_state:
-    mostrar_preview(st.session_state.modulo, "Modulo de ventas")
 
 st.divider()
 
 if st.button(
-    "Procesar Reporte",
+    "Procesar Reporte Diario",
     disabled=not todos_los_archivos_cargados(),
     key="btn_procesar_reporte"
 ):
@@ -127,7 +99,7 @@ if st.button(
         st.session_state.df_visitas
     )
 
-    st.subheader("Resultado")
+    st.subheader("Resultado GPS")
     styled_df = aplicar_estilos(df_resultado)
 
     st.dataframe(

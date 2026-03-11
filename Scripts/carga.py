@@ -2,27 +2,22 @@ import pandas as pd
 
 def leer_archivo(archivo):
     nombre = archivo.name.lower()
-
     if nombre.endswith(".csv"):
-        return pd.read_csv(archivo, low_memory=False)
+        return pd.read_csv(
+            archivo,
+            sep=None,
+            engine="python"
+        )
     elif nombre.endswith((".xlsx", ".xls")):
         return pd.read_excel(archivo)
-    
     else:
         raise ValueError("Formato no soportado")
 
-def leer_archivo_tareas(archivo):
-    def separar_csv(df_tareas):
-        df_tareas_2 = df_tareas.copy()
-        df_tareas_2 = df_tareas.iloc[:, 0].str.split(";", expand=True)
-        col = df_tareas.columns[0].split(";")
-        df_tareas_2.columns= col
-        return df_tareas_2
-    
-    df = leer_archivo(archivo)
 
-    if df.shape[1] == 1 and ";" in df.columns[0]:
-        df = separar_csv(df)
+def leer_archivo_tareas(archivo):
+    df = leer_archivo(archivo)
+    if df.shape[1] == 1:
+        df = df.iloc[:,0].str.split(";", expand=True)
 
     return df
 
