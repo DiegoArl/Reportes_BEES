@@ -44,8 +44,7 @@ def todos_los_archivos_cargados():
     requeridos = [
         "usuarios",
         "df_checkin",
-        "df_visitas",
-        "tareas"
+        "df_visitas"
     ]
     return all(k in st.session_state for k in requeridos)
 
