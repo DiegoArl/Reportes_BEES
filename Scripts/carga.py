@@ -1,6 +1,8 @@
 import pandas as pd
+import streamlit as st
 
 def leer_archivo(archivo):
+    archivo.seek(0)
     nombre = archivo.name.lower()
     if nombre.endswith(".csv"):
         return pd.read_csv(
@@ -13,6 +15,33 @@ def leer_archivo(archivo):
     else:
         raise ValueError("Formato no soportado")
 
+def mostrar_preview(df, titulo):
+    if isinstance(df, pd.DataFrame) and not df.empty:
+        st.subheader(titulo)
+        st.write(f"Filas: {df.shape[0]} | Columnas: {df.shape[1]}")
+        st.dataframe(df.head())
+
+
+def cargar_archivo(label, key_widget, key_data, lector):
+
+    archivo = st.file_uploader(
+        label,
+        type=["csv", "xlsx"],
+        key=key_widget
+    )
+
+    if archivo is None:
+        if key_data in st.session_state:
+            del st.session_state[key_data]
+        return
+
+    try:
+        df = lector(archivo)
+        st.session_state[key_data] = df
+        st.success("Archivo subido correctamente")
+
+    except Exception as e:
+        st.error(str(e))
 
 def leer_archivo_tareas(archivo):
     df = leer_archivo(archivo)

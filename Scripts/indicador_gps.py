@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
 
-def color_gps(val, thresholds=(30, 60, 80)):
+def color_gps(val, thresholds=(30, 50, 70)):
 
     if val is None:
         return ""
@@ -77,6 +76,7 @@ def unir_tablas(df_usuarios, df_checkin, df_visitas):
     ]
 
     df_merge["Rep. Ventas"] = df_merge["Rep. Ventas"].str.upper()
+    df_merge = df_merge.sort_values(by="% GPS Ok > 2 min visitas",ascending=False).reset_index(drop=True)
 
     df_merge["% GPS Ok visitas"] = df_merge["% GPS Ok visitas"].apply(
         lambda x: f"{x*100:.2f}%" if pd.notna(x) and x <= 1 else f"{x:.2f}%" if pd.notna(x) else x

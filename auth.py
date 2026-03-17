@@ -25,7 +25,7 @@ def validar_token(email, token_input):
     return data["token"] == token_input
 
 def enviar_token(email, token):
-    msg = MIMEText(f"Tu token de acceso es: {token}\nExpira en 10 minutos.")
+    msg = MIMEText(f"Tu token de acceso es: {token}\nExpira en 5 minutos.")
     msg["Subject"] = "Token de acceso"
     msg["From"] = st.secrets["EMAIL_USER"]
     msg["To"] = email
