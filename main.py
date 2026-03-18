@@ -3,7 +3,10 @@ import datetime as datetime
 import config as constant
 from auth import generar_token, validar_token, enviar_token
 
-AUTHORIZED_USERS = st.secrets["AUTHORIZED_USERS"].split(",")
+AUTHORIZED_USERS = [
+    e.strip().lower()
+    for e in st.secrets["AUTHORIZED_USERS"].split(",")
+]
 
 def login():
     st.title(constant.COMPANY_NAME)
@@ -15,7 +18,7 @@ def login():
     with c2:
         st.header("Inicio de sesión")
 
-        email = st.text_input("Email autorizado")
+        email = st.text_input("Email autorizado").strip().lower()
 
         if st.button("Enviar token"):
             if email in AUTHORIZED_USERS:
