@@ -65,4 +65,11 @@ if "user" in st.session_state:
 else:
     pg = st.navigation({"Cuenta": [login_page]})
 
-pg.run()
+
+pg_2 = st.navigation(
+    {
+        "Entregas": [delivery_page],
+        "Reportes": [gps_page]
+    }
+)
+pg_2.run()
