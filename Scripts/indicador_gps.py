@@ -92,6 +92,6 @@ def unir_tablas(df_usuarios, df_checkin, df_visitas):
         "GPS Ok visitas",
         "GPS Ok > 2 min Visitas",
     ]:
-        df_merge[col] = pd.to_numeric(df_merge[col], errors="coerce").fillna(0)
+        df_merge[col] = pd.to_numeric(df_merge[col], errors="coerce").fillna(0).astype(int)
 
     return df_merge
