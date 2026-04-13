@@ -1,46 +1,54 @@
 import pandas as pd
 from datetime import datetime
 
-def construir_delivery(df):
+def generar_ceros_delivery(df, empresa):
+    dt = pd.to_numeric(df["codigo_cliente"], errors="coerce").notna()
+    dt_1 = dt.dropna().iloc[0]
+
+    ajuste = 0 if dt_1 == 22 else -1
+
+    codigo_empresa = {
+        "D'onofrio": "001",
+        "Nestlé": "002"
+    }
+
+    columnas_longitud = {
+        'empresa': 3 + ajuste,
+        'division': 3 + ajuste,
+        'oficina': 3 + ajuste,  
+        'domicilio': 3,
+        'codigo_cliente': 6
+    }
+
+    for columna, longitud in columnas_longitud.items():
+        df[columna] = df[columna].astype(str).str.zfill(longitud)
+
+    if "COD CLIENTE BEES" not in df.columns:
+        df["COD CLIENTE BEES"] = (
+            codigo_empresa.get(empresa, "000")
+            + "-"
+            + df['empresa'] 
+            + df['division']
+            + df['oficina']
+            + "-"
+            + df['codigo_cliente']
+            + df['domicilio']
+        )
+
+    return df
+
+def construir_delivery(df, empresa):
     df = df.copy()
 
-    def generar_ceros_delivery(df):
-        dt = pd.to_numeric(df["codigo_cliente"], errors="coerce").notna()
-        dt_1 = dt.dropna().iloc[0]
-
-        ajuste = 0 if dt_1 == 22 else -1
-
-        columnas_longitud = {
-            'empresa': 3 + ajuste,
-            'division': 3 + ajuste,
-            'oficina': 3 + ajuste,  
-            'domicilio': 3,
-            'codigo_cliente': 6
-        }
-        for columna, longitud in columnas_longitud.items():
-            df[columna] = df[columna].astype(str).str.zfill(longitud)
-
-        if "COD CLIENTE BEES" not in df.columns:
-            df["COD CLIENTE BEES"] = (
-                "001"
-                + "-"
-                + df['empresa'] 
-                + df['division']
-                + df['oficina']
-                + "-"
-                + df['codigo_cliente']
-                + df['domicilio']
-            )
-
-        return df
-
-    df = generar_ceros_delivery(df)
+    df = generar_ceros_delivery(df, empresa)
 
     df_filtrado = df[["COD CLIENTE BEES", "dia_visita"]].copy()
     df_filtrado["dia_visita"] = (
         df_filtrado["dia_visita"]
         .astype(str)
         .str.replace(" ", "", regex=False)
+        .str.replace("SEMANA1", "", regex=False)
+        .str.replace("SEMANA2", "", regex=False)
         .str.upper()
     )
 
@@ -50,7 +58,7 @@ def construir_delivery(df):
         lambda x: dias_semana if "TODOSLOSDIAS" in str(x) else str(x)
     )
     df_filtrado["dia_visita"] = df_filtrado["dia_visita"].apply(
-    lambda x: x if isinstance(x, list) else str(x).replace(",", "Y")
+        lambda x: x if isinstance(x, list) else str(x).replace(",", "Y")
     )
     df_filtrado["dia_visita"] = df_filtrado["dia_visita"].apply(
         lambda x: x if isinstance(x, list) else str(x).split("Y")

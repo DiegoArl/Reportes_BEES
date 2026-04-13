@@ -6,6 +6,16 @@ from Scripts.delivery import construir_delivery
 
 st.header("Delivery Window")
 
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.write("Seleccione la empresa")
+    empresa_delivery = st.selectbox(
+        "Seleccione la empresa", 
+        ["Nestlé", "D'onofrio"], 
+        key="empresa_delivery", 
+        label_visibility="collapsed"
+    )
+
 archivo_delivery = st.file_uploader(
     "Sube el módulo de clientes",
     type=["csv", "xlsx"]
@@ -25,23 +35,23 @@ if "delivery" not in st.session_state:
 
 df = st.session_state["delivery"]
 try:
-    df_delivery = df_a_csv(construir_delivery(df))
+    df_delivery = construir_delivery(df, empresa_delivery)
 except Exception:
     st.error("Error procesando el archivo. Verifique el formato o cambie de archivo.")
     del st.session_state["delivery"]
     st.stop()
 
-if not df.empty:
+if not df_delivery.empty:
     st.subheader("Módulo de Clientes")
-    st.write(f"Filas: {df.shape[0]} | Columnas: {df.shape[1]}")
-    st.dataframe(df.head())
+    st.write(f"Filas: {df_delivery.shape[0]} | Columnas: {df_delivery.shape[1]}")
+    st.dataframe(df_delivery.head())
 
     fecha_actual = datetime.now()
     nombre_archivo = f"import-bees-delivery_{fecha_actual.strftime('%d%m%Y')}.csv"
 
     st.download_button(
         label="Descargar CSV",
-        data=df_delivery.getvalue(),
+        data=df_a_csv(df_delivery).getvalue(),
         file_name=nombre_archivo,
         mime="text/csv"
     )
