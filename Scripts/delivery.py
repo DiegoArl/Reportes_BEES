@@ -5,10 +5,15 @@ def construir_delivery(df):
     df = df.copy()
 
     def generar_ceros_delivery(df):
+        dt = pd.to_numeric(df["codigo_cliente"], errors="coerce").notna()
+        dt_1 = dt.dropna().iloc[0]
+
+        ajuste = 0 if dt_1 == 22 else -1
+
         columnas_longitud = {
-            'division': 3,
-            'empresa': 3,
-            'oficina': 3, 
+            'empresa': 3 + ajuste,
+            'division': 3 + ajuste,
+            'oficina': 3 + ajuste,  
             'domicilio': 3,
             'codigo_cliente': 6
         }
