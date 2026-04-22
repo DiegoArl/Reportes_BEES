@@ -44,7 +44,7 @@ except Exception:
 if not df_delivery.empty:
     st.subheader("Módulo de Clientes")
     st.write(f"Filas: {df_delivery.shape[0]} | Columnas: {df_delivery.shape[1]}")
-    st.dataframe(df_delivery.head())
+    st.dataframe(df_delivery.head(100))
 
     fecha_actual = datetime.now()
     nombre_archivo = f"import-bees-delivery_{fecha_actual.strftime('%d%m%Y')}.csv"

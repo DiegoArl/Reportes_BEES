@@ -3,6 +3,7 @@ import pandas as pd
 from Scripts.carga import leer_archivos_clasificados, leer_archivo, leer_archivo_tareas, mostrar_preview, cargar_archivo
 from Scripts.indicador_gps import unir_tablas, aplicar_estilos
 from Scripts.indicador_adopcion import adopcion_tabla, aplicar_estilos_ado
+from Scripts.indicador_tareas import tabla_tareas, aplicar_estilos_tareas
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
@@ -18,6 +19,13 @@ def archivos_gps_cargados():
         "usuarios",
         "df_checkin",
         "df_visitas"
+    ]
+    return all(k in st.session_state for k in requeridos)
+
+def archivos_tareas_cargados():
+    requeridos = [
+        "usuarios",
+        "tareas"
     ]
     return all(k in st.session_state for k in requeridos)
 
@@ -99,20 +107,41 @@ if st.button(
     key="btn_procesar_reporte"
 ):
 
-    df_resultado = unir_tablas(
+    df_resultado_gps = unir_tablas(
         st.session_state.usuarios,
         st.session_state.df_checkin,
         st.session_state.df_visitas
     )
 
     st.subheader("Resultado GPS")
-    styled_df = aplicar_estilos(df_resultado)
+    styled_df_gps = aplicar_estilos(df_resultado_gps)
 
     st.dataframe(
-        styled_df,
+        styled_df_gps,
         width='stretch'
     )
 
+
+if st.button(
+    "Procesar Reporte Tareas",
+    disabled=not archivos_tareas_cargados(),
+    key="btn_procesar_tareas"
+):
+
+    st.subheader("Resultado Tareas")
+
+
+    df_resultado_tareas = tabla_tareas(
+        st.session_state.tareas,
+        st.session_state.usuarios
+    )
+
+    styled_df_tareas = aplicar_estilos_tareas(df_resultado_tareas)
+
+    st.dataframe(
+        styled_df_tareas,
+        width='stretch'
+    )
 
 if st.button(
     "Procesar Reporte Adopción",
@@ -122,23 +151,21 @@ if st.button(
 
     df_modulo = st.session_state.modulo.copy()
 
-    if "rango_adopcion" in st.session_state:
-        f_ini, f_fin = st.session_state.rango_adopcion
+    rango = st.session_state.get("rango_adopcion")
+    if rango and len(rango) == 2:
+        f_ini, f_fin = rango
 
-        df_modulo = df_modulo[
-            (df_modulo["fecha"] >= pd.to_datetime(f_ini)) &
-            (df_modulo["fecha"] <= pd.to_datetime(f_fin))
-        ]
-
-    df_resultado = adopcion_tabla(
+    df_resultado_adopcion = adopcion_tabla(
         st.session_state.usuarios,
-        df_modulo
+        df_modulo,
+        f_ini,
+        f_fin
     )
 
     st.subheader("Resultado Adopción")
-    styled_df = aplicar_estilos_ado(df_resultado)
+    styled_df_ado = aplicar_estilos_ado(df_resultado_adopcion)
 
     st.dataframe(
-        styled_df,
+        styled_df_ado,
         width='stretch'
     )

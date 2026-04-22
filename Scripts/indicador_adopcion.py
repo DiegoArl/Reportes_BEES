@@ -128,8 +128,13 @@ def aplicar_estilos_ado(df):
 
     return styled
 
-def adopcion_tabla(df_usuarios, df_modulo):
+def adopcion_tabla(df_usuarios, df_modulo, fecha_inicio=None, fecha_fin=None):
     val_standard = codigo_standard(df_usuarios)
+
+    if fecha_inicio:
+        df_modulo = df_modulo[df_modulo["fecha"] >= pd.to_datetime(fecha_inicio)]
+    if fecha_fin:
+        df_modulo = df_modulo[df_modulo["fecha"] <= pd.to_datetime(fecha_fin)]
 
     df_user = df_usuarios[["Codigo", "Rep. Ventas", "Supervisor"]].copy()
     df_modulo = procesar_modulo(df_modulo)
