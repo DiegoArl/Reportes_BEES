@@ -22,23 +22,20 @@ def gradient_colors(values, thresholds=(0.30, 0.60, 0.80)):
 
 def aplicar_estilos_tareas(df):
 
-    # Identificar columnas %Alcance por MultiIndex nivel 1
     alcance_cols = [col for col in df.columns if col[1] == "%Alcance"]
+    tarea_cols = [col for col in df.columns if col[1] == "tarea efectiva"]
 
-    # Formatear %Alcance como string ANTES de aplicar estilos
-    df_display = df.copy()
-    for col in alcance_cols:
-        df_display[col] = df_display[col].apply(
-            lambda x: f"{x*100:.2f}%" if pd.notna(x) and x <= 1 else (f"{x:.2f}%" if pd.notna(x) else "")
-        )
+    formato = {
+        **{col: lambda x: f"{x*100:.2f}%" if pd.notna(x) and x <= 1 else (f"{x:.2f}%" if pd.notna(x) else "")
+           for col in alcance_cols},
+        **{col: lambda x: f"{int(x)}" if pd.notna(x) else ""
+           for col in tarea_cols}
+    }
 
     styled = (
-        df.style  # stylear sobre df original (numérico) para colores correctos
+        df.style
         .apply(gradient_colors, subset=alcance_cols, axis=0)
-        .format(
-            {col: lambda x: f"{x*100:.2f}%" if pd.notna(x) and x <= 1 else (f"{x:.2f}%" if pd.notna(x) else "")
-             for col in alcance_cols}
-        )
+        .format(formato)
     )
 
     return styled
