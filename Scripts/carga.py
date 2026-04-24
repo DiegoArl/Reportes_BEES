@@ -54,7 +54,6 @@ def leer_archivos_clasificados(archivos):
     CHECK_IN_KEYS = {
     "Nombre del Rep. Ventas",
     "Primer check-in",
-    "Último check-out",
     "Ruta Efectiva"
     }
 
@@ -69,6 +68,15 @@ def leer_archivos_clasificados(archivos):
         "Visitas completadas",
         "GPS Ok visitas"
     }
+
+    Visitas_alter_keys ={
+        "bdr_gps_ok": "GPS Ok visitas", 
+        "bdr_%_gps_ok": "% GPS Ok visitas",
+        "bdr_gps_ok_2_min": "GPS Ok > 2 min Visitas",
+        "bdr_%_gps_ok_2_min" : "% GPS Ok > 2 min visitas"
+    }
+
+
     df_checkin = None
     df_ventas = None
     df_visitas = None
@@ -115,6 +123,10 @@ def leer_archivos_clasificados(archivos):
 
         cols = set(df.columns)
 
+        if any(col in cols for col in Visitas_alter_keys.keys()):
+            df = df.rename(columns=Visitas_alter_keys)
+            cols = set(df.columns)
+        
         if CHECK_IN_KEYS.issubset(cols):
             df_checkin = separar_nombre_codigo(limpiar_df(df))
 
