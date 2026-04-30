@@ -2,8 +2,8 @@ import pandas as pd
 from datetime import datetime
 
 def generar_ceros_delivery(df, empresa):
-    dt = pd.to_numeric(df["codigo_cliente"], errors="coerce")
-    ajuste = 0 if (dt == 22).any() else -1
+    dt_valor = pd.to_numeric(df["empresa"].iloc[0], errors="coerce")
+    ajuste = 0 if dt_valor == 22 else -1
 
     codigo_empresa = {
         "D'onofrio": "001",
