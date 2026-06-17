@@ -1,171 +1,143 @@
 import streamlit as st
-import pandas as pd
-from Scripts.carga import leer_archivos_clasificados, leer_archivo, leer_archivo_tareas, mostrar_preview, cargar_archivo
-from Scripts.indicador_gps import unir_tablas, aplicar_estilos
-from Scripts.indicador_adopcion import adopcion_tabla, aplicar_estilos_ado
-from Scripts.indicador_tareas import tabla_tareas, aplicar_estilos_tareas
 import warnings
+from Scripts.carga import Cargador
+from Scripts.indicador_gps import IndicadorGPS
+from Scripts.indicador_adopcion import IndicadorAdopcion
+from Scripts.indicador_tareas import IndicadorTareas
+
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
-st.set_page_config(
-    page_title="Automatización de Reportería",
-    layout="wide"
-)
+st.set_page_config(page_title="Automatización de Reportería", layout="wide")
 
-st.title("Reporte Indicador GPS Efectivo")
 
-def archivos_gps_cargados():
-    requeridos = [
-        "usuarios",
-        "df_checkin",
-        "df_visitas"
-    ]
-    return all(k in st.session_state for k in requeridos)
+class ReportePage:
 
-def archivos_tareas_cargados():
-    requeridos = [
-        "usuarios",
-        "tareas"
-    ]
-    return all(k in st.session_state for k in requeridos)
+    def _gps_listo(self):
+        return all(k in st.session_state for k in ["usuarios", "df_checkin", "df_visitas"])
 
-def archivos_adopcion_cargados():
-    requeridos = [
-        "usuarios",
-        "modulo"
-    ]
-    return all(k in st.session_state for k in requeridos)
+    def _tareas_listo(self):
+        return all(k in st.session_state for k in ["usuarios", "tareas"])
 
-st.header("Cargar archivos BEES ONE")
-cargar_archivo(
-    "Sube archivo de usuarios",
-    "usuarios_file",
-    "usuarios",
-    leer_archivo
-)
+    def _adopcion_listo(self):
+        return all(k in st.session_state for k in ["usuarios", "modulo"])
 
-if "usuarios" in st.session_state:
-    mostrar_preview(st.session_state.usuarios, "Usuarios")
+    def _seccion_usuarios(self):
+        Cargador.cargar_archivo(
+            "Sube archivo de usuarios",
+            "usuarios_file",
+            "usuarios",
+            Cargador.leer_archivo
+        )
+        if "usuarios" in st.session_state:
+            Cargador.mostrar_preview(st.session_state.usuarios, "Usuarios")
 
-c1, c2, c3 = st.columns(3)
-with c1:
-    archivos_bees = st.file_uploader(
-        "Sube archivos GPS-visitas-venta",
-        type=["csv", "xlsx"],
-        accept_multiple_files=True,
-        key="bees_files"
-    )
+    def _seccion_archivos_bees(self):
+        archivos_bees = st.file_uploader(
+            "Sube archivos GPS-visitas-venta",
+            type=["csv", "xlsx"],
+            accept_multiple_files=True,
+            key="bees_files"
+        )
+        if archivos_bees:
+            try:
+                df_checkin, df_ventas, df_visitas = Cargador.leer_archivos_clasificados(archivos_bees)
+                st.session_state.df_checkin = df_checkin
+                st.session_state.df_ventas = df_ventas
+                st.session_state.df_visitas = df_visitas
+                st.success("Archivos identificados correctamente")
+            except Exception as e:
+                st.error(f"Error clasificando archivos: {e}")
 
-    if archivos_bees:
-        try:
-
-            df_checkin, df_ventas, df_visitas = leer_archivos_clasificados(archivos_bees)
-
-            st.session_state.df_checkin = df_checkin
-            st.session_state.df_ventas = df_ventas
-            st.session_state.df_visitas = df_visitas
-
-            st.success("Archivos identificados correctamente")
-
-        except Exception as e:
-            st.error(str(e))
-with c2:
-    cargar_archivo(
-        "Sube archivo de Tareas",
-        "tareas_file",
-        "tareas",
-        leer_archivo_tareas
-    )
-
-with c3:
-    cargar_archivo(
-        "Sube Módulo de Ventas",
-        "modulo_file",
-        "modulo",
-        leer_archivo
-    )
-
-    if "modulo" in st.session_state:
-
-        fecha_min = st.session_state.modulo["fecha"].min()
-        fecha_max = st.session_state.modulo["fecha"].max()
-
-        rango_fechas = st.date_input(
-            "Rango de fechas",
-            value=(fecha_min, fecha_max),
-            min_value=fecha_min,
-            max_value=fecha_max,
-            key="rango_adopcion"
+    def _seccion_tareas(self):
+        Cargador.cargar_archivo(
+            "Sube archivo de Tareas",
+            "tareas_file",
+            "tareas",
+            Cargador.leer_archivo_tareas
         )
 
+    def _seccion_modulo_ventas(self):
+        Cargador.cargar_archivo(
+            "Sube Módulo de Ventas",
+            "modulo_file",
+            "modulo",
+            Cargador.leer_archivo
+        )
+        if "modulo" in st.session_state:
+            fecha_min = st.session_state.modulo["fecha"].min()
+            fecha_max = st.session_state.modulo["fecha"].max()
+            st.date_input(
+                "Rango de fechas",
+                value=(fecha_min, fecha_max),
+                min_value=fecha_min,
+                max_value=fecha_max,
+                key="rango_adopcion"
+            )
 
-st.divider()
+    def _procesar_gps(self):
+        try:
+            df_resultado = IndicadorGPS.unir_tablas(
+                st.session_state.usuarios,
+                st.session_state.df_checkin,
+                st.session_state.df_visitas
+            )
+            st.subheader("Resultado GPS")
+            st.dataframe(IndicadorGPS.aplicar_estilos(df_resultado), width='stretch')
+        except Exception as e:
+            st.error(f"Error procesando reporte GPS: {e}")
 
-if st.button(
-    "Procesar Reporte Diario",
-    disabled=not archivos_gps_cargados(),
-    key="btn_procesar_reporte"
-):
+    def _procesar_tareas(self):
+        try:
+            df_resultado = IndicadorTareas.calcular(
+                st.session_state.tareas,
+                st.session_state.usuarios
+            )
+            st.subheader("Resultado Tareas")
+            st.dataframe(IndicadorTareas.aplicar_estilos(df_resultado), width='stretch')
+        except Exception as e:
+            st.error(f"Error procesando reporte de tareas: {e}")
 
-    df_resultado_gps = unir_tablas(
-        st.session_state.usuarios,
-        st.session_state.df_checkin,
-        st.session_state.df_visitas
-    )
+    def _procesar_adopcion(self):
+        try:
+            df_modulo = st.session_state.modulo.copy()
+            rango = st.session_state.get("rango_adopcion")
+            f_ini, f_fin = rango if rango and len(rango) == 2 else (None, None)
 
-    st.subheader("Resultado GPS")
-    styled_df_gps = aplicar_estilos(df_resultado_gps)
+            df_resultado = IndicadorAdopcion.calcular(
+                st.session_state.usuarios,
+                df_modulo,
+                f_ini,
+                f_fin
+            )
+            st.subheader("Resultado Adopción")
+            st.dataframe(IndicadorAdopcion.aplicar_estilos(df_resultado), width='stretch')
+        except Exception as e:
+            st.error(f"Error procesando reporte de adopción: {e}")
 
-    st.dataframe(
-        styled_df_gps,
-        width='stretch'
-    )
+    def render(self):
+        st.title("Reporte Indicador GPS Efectivo")
+        st.header("Cargar archivos BEES ONE")
+
+        self._seccion_usuarios()
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            self._seccion_archivos_bees()
+        with c2:
+            self._seccion_tareas()
+        with c3:
+            self._seccion_modulo_ventas()
+
+        st.divider()
+
+        if st.button("Procesar Reporte Diario", disabled=not self._gps_listo(), key="btn_gps"):
+            self._procesar_gps()
+
+        if st.button("Procesar Reporte Tareas", disabled=not self._tareas_listo(), key="btn_tareas"):
+            self._procesar_tareas()
+
+        if st.button("Procesar Reporte Adopción", disabled=not self._adopcion_listo(), key="btn_adopcion"):
+            self._procesar_adopcion()
 
 
-if st.button(
-    "Procesar Reporte Tareas",
-    disabled=not archivos_tareas_cargados(),
-    key="btn_procesar_tareas"
-):
-
-    st.subheader("Resultado Tareas")
-
-
-    df_resultado_tareas = tabla_tareas(
-        st.session_state.tareas,
-        st.session_state.usuarios
-    )
-
-    styled_df_tareas = aplicar_estilos_tareas(df_resultado_tareas)
-
-    st.dataframe(
-        styled_df_tareas,
-        width='stretch'
-    )
-
-if st.button(
-    "Procesar Reporte Adopción",
-    disabled=not archivos_adopcion_cargados(),
-    key="btn_procesar_adopcion"
-):
-
-    df_modulo = st.session_state.modulo.copy()
-
-    rango = st.session_state.get("rango_adopcion")
-    if rango and len(rango) == 2:
-        f_ini, f_fin = rango
-
-    df_resultado_adopcion = adopcion_tabla(
-        st.session_state.usuarios,
-        df_modulo,
-        f_ini,
-        f_fin
-    )
-
-    st.subheader("Resultado Adopción")
-    styled_df_ado = aplicar_estilos_ado(df_resultado_adopcion)
-
-    st.dataframe(
-        styled_df_ado,
-        width='stretch'
-    )
+ReportePage().render()

@@ -1,94 +1,46 @@
 import pandas as pd
 import streamlit as st
 
-def leer_archivo(archivo):
-    archivo.seek(0)
-    nombre = archivo.name.lower()
-    if nombre.endswith(".csv"):
-        return pd.read_csv(
-            archivo,
-            sep=None,
-            engine="python"
-        )
-    elif nombre.endswith((".xlsx", ".xls")):
-        return pd.read_excel(archivo)
-    else:
-        raise ValueError("Formato no soportado")
 
-def mostrar_preview(df, titulo):
-    if isinstance(df, pd.DataFrame) and not df.empty:
-        st.subheader(titulo)
-        st.write(f"Filas: {df.shape[0]} | Columnas: {df.shape[1]}")
-        st.dataframe(df.head())
+class Cargador:
 
-
-def cargar_archivo(label, key_widget, key_data, lector):
-
-    archivo = st.file_uploader(
-        label,
-        type=["csv", "xlsx"],
-        key=key_widget
-    )
-
-    if archivo is None:
-        if key_data in st.session_state:
-            del st.session_state[key_data]
-        return
-
-    try:
-        df = lector(archivo)
-        st.session_state[key_data] = df
-        st.success("Archivo subido correctamente")
-
-    except Exception as e:
-        st.error(str(e))
-
-def leer_archivo_tareas(archivo):
-    df = leer_archivo(archivo)
-    if df.shape[1] == 1:
-        df = df.iloc[:,0].str.split(";", expand=True)
-
-    return df
-
-def leer_archivos_clasificados(archivos):
-    CHECK_IN_KEYS = {
-    "Nombre del Rep. Ventas",
-    "Primer check-in",
-    "Ruta Efectiva"
-    }
-
-    VENTAS_KEYS = {
-        "bdr_id",
-        "Orders",
-        "Total Revenue"
-    }
-
-    VISITAS_KEYS = {
-        "Visitas planificadas",
-        "Visitas completadas",
-        "GPS Ok visitas"
-    }
-
-    Visitas_alter_keys ={
-        "bdr_gps_ok": "GPS Ok visitas", 
+    CHECK_IN_KEYS = {"Nombre del Rep. Ventas", "Primer check-in", "Ruta Efectiva"}
+    VENTAS_KEYS = {"bdr_id", "Orders", "Total Revenue"}
+    VISITAS_KEYS = {"Visitas planificadas", "Visitas completadas", "GPS Ok visitas"}
+    VISITAS_ALIAS = {
+        "bdr_gps_ok": "GPS Ok visitas",
         "bdr_%_gps_ok": "% GPS Ok visitas",
         "bdr_gps_ok_2_min": "GPS Ok > 2 min Visitas",
-        "bdr_%_gps_ok_2_min" : "% GPS Ok > 2 min visitas"
+        "bdr_%_gps_ok_2_min": "% GPS Ok > 2 min visitas"
     }
 
+    @staticmethod
+    def leer_archivo(archivo):
+        archivo.seek(0)
+        nombre = archivo.name.lower()
+        if nombre.endswith(".csv"):
+            return pd.read_csv(archivo, sep=None, engine="python")
+        elif nombre.endswith((".xlsx", ".xls")):
+            return pd.read_excel(archivo)
+        raise ValueError("Formato no soportado")
 
-    df_checkin = None
-    df_ventas = None
-    df_visitas = None
+    @staticmethod
+    def leer_archivo_tareas(archivo):
+        df = Cargador.leer_archivo(archivo)
+        if df.shape[1] == 1:
+            df = df.iloc[:, 0].str.split(";", expand=True)
+        return df
 
-    def limpiar_df(df):
+    @staticmethod
+    def _limpiar_df(df):
         if df is None:
             return None
         if df.shape[1] >= 2:
             df = df.dropna(subset=[df.columns[1]])
         return df
-    
-    def separar_nombre_codigo(df):
+
+    @staticmethod
+    def _separar_nombre_codigo(df):
         if df is None:
             return None
         df = df.copy()
@@ -114,29 +66,49 @@ def leer_archivos_clasificados(archivos):
 
         nuevas = ["Codigo", "Rep. Ventas"]
         resto = [c for c in df.columns if c not in nuevas]
-        df = df[nuevas + resto]
+        return df[nuevas + resto]
 
-        return df
-    
-    for archivo in archivos:
-        df = leer_archivo(archivo)
+    @classmethod
+    def leer_archivos_clasificados(cls, archivos):
+        df_checkin = df_ventas = df_visitas = None
 
-        cols = set(df.columns)
-
-        if any(col in cols for col in Visitas_alter_keys.keys()):
-            df = df.rename(columns=Visitas_alter_keys)
+        for archivo in archivos:
+            df = cls.leer_archivo(archivo)
             cols = set(df.columns)
-        
-        if CHECK_IN_KEYS.issubset(cols):
-            df_checkin = separar_nombre_codigo(limpiar_df(df))
 
-        elif VENTAS_KEYS.issubset(cols):
-            df_ventas = separar_nombre_codigo(limpiar_df(df))
+            if any(c in cols for c in cls.VISITAS_ALIAS):
+                df = df.rename(columns=cls.VISITAS_ALIAS)
+                cols = set(df.columns)
 
-        elif VISITAS_KEYS.issubset(cols):
-            df_visitas = separar_nombre_codigo(limpiar_df(df))
+            if cls.CHECK_IN_KEYS.issubset(cols):
+                df_checkin = cls._separar_nombre_codigo(cls._limpiar_df(df))
+            elif cls.VENTAS_KEYS.issubset(cols):
+                df_ventas = cls._separar_nombre_codigo(cls._limpiar_df(df))
+            elif cls.VISITAS_KEYS.issubset(cols):
+                df_visitas = cls._separar_nombre_codigo(cls._limpiar_df(df))
 
-    if df_checkin is None or df_visitas is None:
-        raise ValueError("Faltan archivos obligatorios: Check-In o Visitas")
+        if df_checkin is None or df_visitas is None:
+            raise ValueError("Faltan archivos obligatorios: Check-In o Visitas")
 
-    return df_checkin, df_ventas, df_visitas
+        return df_checkin, df_ventas, df_visitas
+
+    @staticmethod
+    def mostrar_preview(df, titulo):
+        if isinstance(df, pd.DataFrame) and not df.empty:
+            st.subheader(titulo)
+            st.write(f"Filas: {df.shape[0]} | Columnas: {df.shape[1]}")
+            st.dataframe(df.head())
+
+    @staticmethod
+    def cargar_archivo(label, key_widget, key_data, lector):
+        archivo = st.file_uploader(label, type=["csv", "xlsx"], key=key_widget)
+        if archivo is None:
+            if key_data in st.session_state:
+                del st.session_state[key_data]
+            return
+        try:
+            df = lector(archivo)
+            st.session_state[key_data] = df
+            st.success("Archivo subido correctamente")
+        except Exception as e:
+            st.error(f"Error al cargar archivo: {e}")
